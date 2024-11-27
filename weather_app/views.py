@@ -8,4 +8,8 @@ def coolest_places(request):
     return JsonResponse(res, safe=False)
 
 def temperature_info(request):
-    pass
+    location = request.GET.get('location')
+    destination = request.GET.get('destination') 
+    date = request.GET.get('date')
+    res = WeatherService().temp_difference(location, destination, date)
+    return JsonResponse(res, safe=False)
