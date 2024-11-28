@@ -1,5 +1,6 @@
 import json
 import requests
+from django.core.cache import cache
 from datetime import datetime
 
 class BdDistrictServie:
@@ -25,6 +26,12 @@ class WeatherService:
         self.district_list = self.district_service.get_district() 
 
     def fetch_weather(self, lat, long, date=None):
+        cache_key = f"weather_{lat}_{long}_{date or '7_days'}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return cached_data
+
         API_URL = self.district_service.get_url(lat, long)
         params = {
             "latitude": lat,
@@ -37,12 +44,13 @@ class WeatherService:
             params["end_date"] = date
         else:
             params["forecast_days"] = 7
-        print(params)
 
         response = requests.get(API_URL, params=params, timeout=5)
-        print(response)
+
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            cache.set(cache_key, data, timeout=60 * 60)
+            return data
         return None
 
     def calculate_average(self, weather_data, one_day=False):
